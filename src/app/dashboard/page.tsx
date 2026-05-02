@@ -11,7 +11,8 @@ import AnalyticsCharts from '@/components/AnalyticsCharts'
 import RulesManager from '@/components/RulesManager'
 import GoalsTracker from '@/components/GoalsTracker'
 import ExportMenu from '@/components/ExportMenu'
-import { Download, BarChart3, Shield, Target, User } from 'lucide-react'
+import Link from 'next/link'
+import { User, Download, BarChart3, Shield, Target } from 'lucide-react'
 
 type Tab = 'history' | 'analytics' | 'rules' | 'goals'
 
@@ -134,11 +135,20 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Family Digital Agreement</h1>
-          <p className="text-gray-600 mt-1">
-            Welcome, {user?.name}! Family: {family?.name}
-          </p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Family Digital Agreement</h1>
+            <p className="text-gray-600 mt-1">
+              Welcome, {user?.name}! Family: {family?.name}
+            </p>
+          </div>
+          <Link
+            href="/settings"
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <User size={16} />
+            Extension Setup
+          </Link>
         </div>
 
         <div className="bg-white rounded-lg shadow p-4 mb-6">
