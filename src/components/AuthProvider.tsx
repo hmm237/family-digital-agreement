@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: false,
   })
   const [loading, setLoading] = useState(true)
-  const fetchingRef = useRef(false)
+
 
 
 
@@ -80,7 +80,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return null
       }
 
+      if (family) {
+        console.log('[fetchFamily] Successfully fetched family:', family.name)
+      }
       return family as FamilyWithMembersDB
+
     } catch (err) {
       console.error('[fetchFamily] Exception:', err)
       return null
@@ -89,80 +93,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 
   useEffect(() => {
-    const initAuth = async () => {
-      // Safety timeout: 8 seconds max for initial load
-      const timer = setTimeout(() => {
-        setLoading(false)
-        console.warn('[AuthProvider] Initialization timed out')
-      }, 8000)
+    let mounted = true
+
+    const handleAuthStateChange = async (event: string, session: any) => {
+      console.log('[AuthProvider] Event:', event)
+      
+      if (!session?.user) {
+        if (mounted) {
+          setAuthState({ user: null, family: null, isAuthenticated: false })
+          setLoading(false)
+        }
+        return
+      }
 
       try {
-        console.log('[AuthProvider] Initializing auth...')
-        const { data: { user }, error } = await supabase.auth.getUser()
-
-        if (error) {
-          console.error('[AuthProvider] getUser error:', error)
-        }
-
-        if (user && !fetchingRef.current) {
-          fetchingRef.current = true
-          const family = await fetchFamily(user.id)
+        const family = await fetchFamily(session.user.id)
+        if (mounted) {
           setAuthState({
-            user: user as unknown as User,
+            user: session.user as unknown as User,
             family: family as FamilyWithMembers | null,
             isAuthenticated: true,
           })
-          fetchingRef.current = false
-        } else if (!user) {
-          setAuthState({
-            user: null,
-            family: null,
-            isAuthenticated: false,
-          })
         }
       } catch (err) {
-        console.error('[AuthProvider] Init error:', err)
-        fetchingRef.current = false
+        console.error('[AuthProvider] Fetch error:', err)
       } finally {
-        clearTimeout(timer)
-        setLoading(false)
+        if (mounted) setLoading(false)
       }
     }
 
-    initAuth()
+    // Initial session check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        handleAuthStateChange('INITIAL', session)
+      } else {
+        setLoading(false)
+      }
+    })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('[AuthProvider] Auth state change:', event)
-        if (fetchingRef.current) return
-
-        try {
-          if (session?.user) {
-            fetchingRef.current = true
-            const family = await fetchFamily(session.user.id)
-            setAuthState({
-              user: session.user as unknown as User,
-              family: family as FamilyWithMembers | null,
-              isAuthenticated: true,
-            })
-            fetchingRef.current = false
-          } else {
-            setAuthState({
-              user: null,
-              family: null,
-              isAuthenticated: false,
-            })
-          }
-        } finally {
-          setLoading(false)
-        }
+      (event, session) => {
+        handleAuthStateChange(event, session)
       }
     )
 
-
-    return () => subscription.unsubscribe()
-
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [fetchFamily])
+
 
   return (
     <AuthContext.Provider value={authState}>
