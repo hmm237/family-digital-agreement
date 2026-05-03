@@ -129,10 +129,11 @@ export default function AnalyticsCharts({ visits, dateRange }: AnalyticsChartsPr
                   if (percent < 0.05) return null;
                   
                   return (
-                    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontWeight="bold" fontSize={12}>
-                      {value}
+                    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontWeight="bold" fontSize={11}>
+                      {`${value} (${(percent * 100).toFixed(0)}%)`}
                     </text>
                   );
+
                 }}
                 outerRadius={120}
                 fill="#8884d8"

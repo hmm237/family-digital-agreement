@@ -31,7 +31,8 @@ export default function DashboardPage() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    router.replace('/login')
+    // Use window.location.href for a full page refresh to clear all states
+    window.location.href = '/login'
   }
 
   const fetchData = useCallback(async () => {
@@ -196,7 +197,7 @@ export default function DashboardPage() {
             <h1 className="text-3xl font-bold text-gray-900">Family Digital Agreement</h1>
             <div className="text-gray-600 mt-1 flex flex-col">
               <span>Welcome, <span className="font-bold text-gray-900">{family?.members?.find(m => m.id === user?.id)?.name || (user as any)?.user_metadata?.full_name || (user as any)?.user_metadata?.name || user?.email}</span>!</span>
-              <span>Family: <span className="font-bold text-gray-900">{family?.name}</span></span>
+              <span className="mt-1">Family: <span className="font-bold text-gray-900">{family?.name}</span></span>
             </div>
           </div>
           <div className="flex items-center gap-3">

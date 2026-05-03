@@ -103,17 +103,19 @@ export default function GoalsTracker({ goals, familyId, userId, isParent, visits
         {isParent && (
           <button
             onClick={() => setShowForm(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-bold shadow-md"
           >
             <Plus size={16} />
-            Set Quota
+            Set Daily/Weekly Limit
           </button>
+
         )}
       </div>
 
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-gray-50 rounded-lg p-6 mb-6 border">
-          <h3 className="text-lg font-medium mb-4">Set New Quota</h3>
+          <h3 className="text-lg font-bold mb-4">Set Screen Time Limit</h3>
+
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
