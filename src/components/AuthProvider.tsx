@@ -91,6 +91,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const initAuth = async () => {
+      // Safety timeout: 8 seconds max for initial load
+      const timer = setTimeout(() => {
+        setLoading(false)
+        console.warn('[AuthProvider] Initialization timed out')
+      }, 8000)
+
       try {
         console.log('[AuthProvider] Initializing auth...')
         const { data: { user }, error } = await supabase.auth.getUser()
@@ -100,7 +106,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (user) {
-          console.log('[AuthProvider] User found:', user.email)
           const family = await fetchFamily(user.id)
           setAuthState({
             user: user as unknown as User,
@@ -108,7 +113,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isAuthenticated: true,
           })
         } else {
-          console.log('[AuthProvider] No user, setting unauthenticated')
           setAuthState({
             user: null,
             family: null,
@@ -118,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         console.error('[AuthProvider] Init error:', err)
       } finally {
+        clearTimeout(timer)
         setLoading(false)
       }
     }
@@ -126,35 +131,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('[AuthProvider] Auth state change:', event, session?.user?.email)
-        if (session?.user) {
-          const family = await fetchFamily(session.user.id)
-          setAuthState({
-            user: session.user as unknown as User,
-            family: family as FamilyWithMembers | null,
-            isAuthenticated: true,
-          })
-        } else {
-          setAuthState({
-            user: null,
-            family: null,
-            isAuthenticated: false,
-          })
+        console.log('[AuthProvider] Auth state change:', event)
+        try {
+          if (session?.user) {
+            const family = await fetchFamily(session.user.id)
+            setAuthState({
+              user: session.user as unknown as User,
+              family: family as FamilyWithMembers | null,
+              isAuthenticated: true,
+            })
+          } else {
+            setAuthState({
+              user: null,
+              family: null,
+              isAuthenticated: false,
+            })
+          }
+        } finally {
+          setLoading(false)
         }
-        setLoading(false)
       }
     )
 
     return () => subscription.unsubscribe()
+
   }, [fetchFamily])
 
   return (
     <AuthContext.Provider value={authState}>
       {loading ? (
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading Family Hub...</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-6 text-sm text-indigo-600 hover:underline"
+          >
+            Taking too long? Click to refresh
+          </button>
         </div>
       ) : children}
+
     </AuthContext.Provider>
   )
 }

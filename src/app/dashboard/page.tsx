@@ -92,7 +92,11 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
+
+    // Safety timeout to ensure loading doesn't hang more than 10s
+    setTimeout(() => setLoading(false), 10000)
   }, [family, dateRange, selectedUser, isParent])
+
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -142,11 +146,19 @@ export default function DashboardPage() {
 
   if (!family) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+        <p className="text-gray-600">Syncing family data...</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-4 text-sm text-indigo-600 hover:underline"
+        >
+          Click here if it stays spinning
+        </button>
       </div>
     )
   }
+
 
   const tabs = [
     { id: 'history', label: 'History', icon: BarChart3 },
@@ -298,11 +310,18 @@ export default function DashboardPage() {
 
         <div className="bg-white rounded-lg shadow">
           {loading ? (
-            <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Loading...</p>
+            <div className="p-12 text-center">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Fetching latest visits...</p>
+              <button 
+                onClick={() => setLoading(false)}
+                className="mt-4 text-xs text-indigo-500 hover:underline"
+              >
+                Cancel loading
+              </button>
             </div>
           ) : (
+
             <>
               {activeTab === 'history' && (
                 <HistoryTable visits={visits} onRefresh={fetchData} familyMembers={family?.members || []} />
