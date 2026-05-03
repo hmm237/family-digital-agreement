@@ -15,16 +15,20 @@ export default function FamilySetupPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Redirect if already in a family
-  if (family) {
-    router.push('/dashboard')
-    return null
-  }
+  useEffect(() => {
+    if (family) {
+      router.push('/dashboard')
+    } else if (!isAuthenticated) {
+      router.push('/login')
+    }
+  }, [family, isAuthenticated, router])
 
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
-    router.push('/login')
-    return null
+  if (family || !isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    )
   }
 
   const handleCreateFamily = async (e: React.FormEvent) => {
