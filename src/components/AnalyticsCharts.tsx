@@ -119,7 +119,21 @@ export default function AnalyticsCharts({ visits, dateRange }: AnalyticsChartsPr
                 data={categoryData}
                 cx="50%"
                 cy="50%"
-                label={({ name, value, percent }) => `${name}: ${value} (${((percent || 0) * 100).toFixed(0)}%)`}
+                labelLine={false}
+                label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, name, value }) => {
+                  const RADIAN = Math.PI / 180;
+                  const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
+                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                  
+                  if (percent < 0.05) return null;
+                  
+                  return (
+                    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontWeight="bold" fontSize={12}>
+                      {value}
+                    </text>
+                  );
+                }}
                 outerRadius={120}
                 fill="#8884d8"
                 dataKey="value"
@@ -129,6 +143,7 @@ export default function AnalyticsCharts({ visits, dateRange }: AnalyticsChartsPr
                 ))}
               </Pie>
               <Tooltip />
+              <Legend />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -145,7 +160,7 @@ export default function AnalyticsCharts({ visits, dateRange }: AnalyticsChartsPr
               <YAxis />
               <Tooltip />
               <Bar dataKey="minutes" fill="#6366f1">
-                <LabelList dataKey="minutes" position="top" />
+                <LabelList dataKey="minutes" position="insideTop" fill="#fff" fontWeight="bold" />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -163,7 +178,7 @@ export default function AnalyticsCharts({ visits, dateRange }: AnalyticsChartsPr
               <YAxis type="category" dataKey="domain" tick={{ fontSize: 12 }} width={200} />
               <Tooltip />
               <Bar dataKey="count" fill="#8b5cf6">
-                <LabelList dataKey="count" position="right" />
+                <LabelList dataKey="count" position="insideRight" fill="#fff" fontWeight="bold" />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -181,7 +196,7 @@ export default function AnalyticsCharts({ visits, dateRange }: AnalyticsChartsPr
               <YAxis />
               <Tooltip />
               <Bar dataKey="count" fill="#ec4899">
-                <LabelList dataKey="count" position="top" />
+                <LabelList dataKey="count" position="insideTop" fill="#fff" fontWeight="bold" />
               </Bar>
             </BarChart>
           </ResponsiveContainer>

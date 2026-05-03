@@ -39,50 +39,58 @@ export default function DashboardPage() {
 
     setLoading(true)
 
-    const now = new Date()
-    const daysAgo = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90
-    const startDate = startOfDay(subDays(now, daysAgo))
-    const endDate = endOfDay(now)
+    try {
+      const now = new Date()
+      const daysAgo = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90
+      const startDate = startOfDay(subDays(now, daysAgo))
+      const endDate = endOfDay(now)
 
-    let query = supabase
-      .from('visits')
-      .select('*')
-      .eq('family_id', family.id)
-      .gte('visited_at', startDate.toISOString())
-      .lte('visited_at', endDate.toISOString())
-      .order('visited_at', { ascending: false })
-
-    if (selectedUser !== 'all') {
-      query = query.eq('user_id', selectedUser)
-    }
-
-    const { data: visitsData } = await query
-    if (visitsData) setVisits(visitsData as Visit[])
-
-    if (isParent) {
-      const { data: rulesData } = await supabase
-        .from('rules')
+      let query = supabase
+        .from('visits')
         .select('*')
         .eq('family_id', family.id)
-        .order('created_at', { ascending: false })
-      if (rulesData) setRules(rulesData as Rule[])
+        .gte('visited_at', startDate.toISOString())
+        .lte('visited_at', endDate.toISOString())
+        .order('visited_at', { ascending: false })
+
+      if (selectedUser !== 'all') {
+        query = query.eq('user_id', selectedUser)
+      }
+
+      const { data: visitsData, error: visitsError } = await query
+      if (visitsError) console.error('Error fetching visits:', visitsError)
+      if (visitsData) setVisits(visitsData as Visit[])
+
+      if (isParent) {
+        const { data: rulesData, error: rulesError } = await supabase
+          .from('rules')
+          .select('*')
+          .eq('family_id', family.id)
+          .order('created_at', { ascending: false })
+        if (rulesError) console.error('Error fetching rules:', rulesError)
+        if (rulesData) setRules(rulesData as Rule[])
+      }
+
+      const { data: goalsData, error: goalsError } = await supabase
+        .from('goals')
+        .select('*')
+        .eq('family_id', family.id)
+        .gte('period_end', startDate.toISOString())
+        .order('period_end', { ascending: true })
+      
+      if (goalsError) console.error('Error fetching goals:', goalsError)
+
+      if (goalsData) {
+        setGoals((goalsData as Goal[]).filter(g =>
+          isWithinInterval(new Date(g.period_start), { start: startDate, end: endDate }) ||
+          isWithinInterval(new Date(g.period_end), { start: startDate, end: endDate })
+        ))
+      }
+    } catch (err) {
+      console.error('Unexpected error in fetchData:', err)
+    } finally {
+      setLoading(false)
     }
-
-    const { data: goalsData } = await supabase
-      .from('goals')
-      .select('*')
-      .eq('family_id', family.id)
-      .gte('period_end', startDate.toISOString())
-      .order('period_end', { ascending: true })
-
-    if (goalsData) {
-      setGoals((goalsData as Goal[]).filter(g =>
-        isWithinInterval(new Date(g.period_start), { start: startDate, end: endDate }) ||
-        isWithinInterval(new Date(g.period_end), { start: startDate, end: endDate })
-      ))
-    }
-
-    setLoading(false)
   }, [family, dateRange, selectedUser, isParent])
 
   useEffect(() => {
@@ -152,9 +160,10 @@ export default function DashboardPage() {
         <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Family Digital Agreement</h1>
-            <p className="text-gray-600 mt-1">
-              Welcome, {family?.members?.find(m => m.id === user?.id)?.name || (user as any)?.user_metadata?.full_name || (user as any)?.user_metadata?.name || user?.email}! Family: {family?.name}
-            </p>
+            <div className="text-gray-600 mt-1 flex flex-col">
+              <span>Welcome, <span className="font-bold text-gray-900">{family?.members?.find(m => m.id === user?.id)?.name || (user as any)?.user_metadata?.full_name || (user as any)?.user_metadata?.name || user?.email}</span>!</span>
+              <span>Family: <span className="font-bold text-gray-900">{family?.name}</span></span>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <Link
