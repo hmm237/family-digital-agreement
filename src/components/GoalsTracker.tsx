@@ -103,11 +103,12 @@ export default function GoalsTracker({ goals, familyId, userId, isParent, visits
         {isParent && (
           <button
             onClick={() => setShowForm(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-bold shadow-md"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-bold shadow-lg transform hover:scale-105 transition-all"
           >
-            <Plus size={16} />
-            Set Daily/Weekly Limit
+            <Plus size={20} />
+            Set Screen Time Quota
           </button>
+
 
         )}
       </div>

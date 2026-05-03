@@ -164,7 +164,8 @@ export default function DashboardPage() {
     { id: 'history', label: 'History', icon: BarChart3 },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     ...(isParent ? [{ id: 'rules', label: 'Rules', icon: Shield } as const] : []),
-    { id: 'goals', label: 'Screen Time', icon: Target },
+    { id: 'goals', label: 'Screen Time Quotas', icon: Target },
+
   ]
 
   // Calculate exceeded quotas for global alert
