@@ -109,12 +109,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const family = await fetchFamily(session.user.id)
         if (mounted) {
+          // Find the current user in the family members to get the correct role and name from DB
+          const dbUser = family?.members?.find(m => m.id === session.user.id)
+          
           setAuthState({
-            user: session.user as unknown as User,
+            user: (dbUser || session.user) as unknown as User,
             family: family as FamilyWithMembers | null,
             isAuthenticated: true,
           })
         }
+
       } catch (err) {
         console.error('[AuthProvider] Fetch error:', err)
       } finally {

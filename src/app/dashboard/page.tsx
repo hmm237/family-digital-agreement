@@ -207,7 +207,8 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Family Digital Agreement</h1>
+            <h1 className="text-3xl font-bold text-indigo-700">Family Digital Agreement</h1>
+
             <div className="text-gray-600 mt-1 flex flex-col">
               <span>Welcome, <span className="font-bold text-gray-900">{family?.members?.find(m => m.id === user?.id)?.name || (user as any)?.user_metadata?.full_name || (user as any)?.user_metadata?.name || user?.email}</span>!</span>
               <span className="mt-1">Family: <span className="font-bold text-gray-900">{family?.name}</span></span>
