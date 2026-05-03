@@ -1,26 +1,26 @@
 'use client'
 
 import { useState } from 'react'
-import { Goal } from '@/types'
+import { Goal, Visit, User } from '@/types'
 import { supabase } from '@/lib/supabase'
-import { Plus, Target, Trophy, Clock, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, Target, Clock, CheckCircle, XCircle } from 'lucide-react'
 
 interface GoalsTrackerProps {
   goals: Goal[]
   familyId: string
   userId?: string
   isParent: boolean
+  visits: Visit[]
+  familyMembers: User[]
 }
 
-export default function GoalsTracker({ goals, familyId, userId, isParent }: GoalsTrackerProps) {
+export default function GoalsTracker({ goals, familyId, userId, isParent, visits, familyMembers }: GoalsTrackerProps) {
   const [showForm, setShowForm] = useState(false)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [type, setType] = useState<Goal['type']>('daily_screen_time')
-  const [targetValue, setTargetValue] = useState(60)
-  const [unit, setUnit] = useState('minutes')
+  const [targetValue, setTargetValue] = useState(120) // Default to 120 mins
   const [period, setPeriod] = useState<'daily' | 'weekly'>('daily')
-  const [reward, setReward] = useState('')
+  const [assignedUserId, setAssignedUserId] = useState<string>('all')
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,25 +35,24 @@ export default function GoalsTracker({ goals, familyId, userId, isParent }: Goal
 
     const { error } = await supabase.from('goals').insert({
       family_id: familyId,
-      user_id: userId || null,
+      user_id: assignedUserId === 'all' ? null : assignedUserId,
       title,
       description,
-      type,
+      type: 'daily_screen_time',
       target_value: targetValue,
       current_value: 0,
-      unit,
+      unit: 'minutes',
       period,
       status: 'active',
       period_start: periodStart.toISOString(),
       period_end: periodEnd.toISOString(),
-      reward: reward || null,
     })
 
     if (error) {
-      alert('Error creating goal: ' + error.message)
+      alert('Error creating allowance: ' + error.message)
     } else {
       setShowForm(false)
-      window.location.reload() // Refresh to show new goal
+      window.location.reload() // Refresh to show new allowance
     }
 
     setLoading(false)
@@ -67,7 +66,7 @@ export default function GoalsTracker({ goals, familyId, userId, isParent }: Goal
   const getStatusIcon = (status: Goal['status']) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="text-green-600" size={20} />
+        return <CheckCircle className="text-gray-400" size={20} />
       case 'missed':
         return <XCircle className="text-red-600" size={20} />
       default:
@@ -75,26 +74,31 @@ export default function GoalsTracker({ goals, familyId, userId, isParent }: Goal
     }
   }
 
-  const getProgressPercent = (goal: Goal) => {
-    return Math.min(100, Math.round((goal.current_value / goal.target_value) * 100))
+  const calculateUsage = (goal: Goal) => {
+    const start = new Date(goal.period_start).getTime()
+    const end = new Date(goal.period_end).getTime()
+
+    const relevantVisits = visits.filter(v => {
+      const vTime = new Date(v.visited_at).getTime()
+      if (vTime < start || vTime > end) return false
+      if (goal.user_id && v.user_id !== goal.user_id) return false
+      return true
+    })
+
+    const totalMs = relevantVisits.reduce((sum, v) => sum + v.duration_ms, 0)
+    return Math.round(totalMs / 1000 / 60) // in minutes
   }
 
-  const formatTypeLabel = (type: Goal['type']) => {
-    const labels: Record<string, string> = {
-      daily_screen_time: 'Daily Screen Time',
-      category_limit: 'Category Limit',
-      site_limit: 'Site Limit',
-      bedtime: 'Bedtime',
-    }
-    return labels[type] || type
+  const getProgressPercent = (goal: Goal, usage: number) => {
+    return Math.min(100, Math.round((usage / goal.target_value) * 100))
   }
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-xl font-semibold">Goals & Rewards</h2>
-          <p className="text-sm text-gray-600">Set targets and track progress</p>
+          <h2 className="text-xl font-semibold">Screen Time Allowance</h2>
+          <p className="text-sm text-gray-600">Set daily or weekly screen time quotas</p>
         </div>
         {isParent && (
           <button
@@ -102,14 +106,14 @@ export default function GoalsTracker({ goals, familyId, userId, isParent }: Goal
             className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
           >
             <Plus size={16} />
-            Create Goal
+            Set Quota
           </button>
         )}
       </div>
 
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-gray-50 rounded-lg p-6 mb-6 border">
-          <h3 className="text-lg font-medium mb-4">Create New Goal</h3>
+          <h3 className="text-lg font-medium mb-4">Set New Quota</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -118,45 +122,35 @@ export default function GoalsTracker({ goals, familyId, userId, isParent }: Goal
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., Limit social media to 1 hour"
+                placeholder="e.g., Daily Limit"
                 required
                 className="w-full border-gray-300 rounded-md"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Goal Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Assign To</label>
               <select
-                value={type}
-                onChange={(e) => setType(e.target.value as any)}
+                value={assignedUserId}
+                onChange={(e) => setAssignedUserId(e.target.value)}
                 className="w-full border-gray-300 rounded-md"
               >
-                <option value="daily_screen_time">Daily Screen Time</option>
-                <option value="category_limit">Category Limit</option>
-                <option value="site_limit">Site Limit</option>
-                <option value="bedtime">Bedtime</option>
+                <option value="all">All family members</option>
+                {familyMembers.map(member => (
+                  <option key={member.id} value={member.id}>
+                    {member.name} ({member.role})
+                  </option>
+                ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Target Value</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Target Limit (Minutes)</label>
               <input
                 type="number"
                 value={targetValue}
                 onChange={(e) => setTargetValue(Number(e.target.value))}
                 min="1"
-                required
-                className="w-full border-gray-300 rounded-md"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-              <input
-                type="text"
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                placeholder="minutes, visits, etc."
                 required
                 className="w-full border-gray-300 rounded-md"
               />
@@ -174,24 +168,13 @@ export default function GoalsTracker({ goals, familyId, userId, isParent }: Goal
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Reward (optional)</label>
-              <input
-                type="text"
-                value={reward}
-                onChange={(e) => setReward(e.target.value)}
-                placeholder="e.g., Extra 30 min screen time"
-                className="w-full border-gray-300 rounded-md"
-              />
-            </div>
-
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
               <input
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Additional details about the goal"
+                placeholder="Additional details"
                 className="w-full border-gray-300 rounded-md"
               />
             </div>
@@ -203,7 +186,7 @@ export default function GoalsTracker({ goals, familyId, userId, isParent }: Goal
               disabled={loading}
               className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
             >
-              {loading ? 'Creating...' : 'Create Goal'}
+              {loading ? 'Creating...' : 'Create Quota'}
             </button>
             <button
               type="button"
@@ -216,16 +199,21 @@ export default function GoalsTracker({ goals, familyId, userId, isParent }: Goal
         </form>
       )}
 
-      {/* Goals grid */}
+      {/* Grid */}
       {goals.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <Target className="mx-auto text-gray-400 mb-2" size={48} />
-          <p className="text-gray-500">No goals set yet. Create one to start tracking progress!</p>
+          <Clock className="mx-auto text-gray-400 mb-2" size={48} />
+          <p className="text-gray-500">No screen time quotas set yet. Create one to monitor limits!</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {goals.map(goal => (
-            <div key={goal.id} className="bg-white border rounded-lg p-4 shadow-sm">
+          {goals.map(goal => {
+            const usage = calculateUsage(goal)
+            const isExceeded = usage > goal.target_value
+            const memberAssigned = goal.user_id ? familyMembers.find(m => m.id === goal.user_id)?.name : "All Members"
+
+            return (
+            <div key={goal.id} className={`border rounded-lg p-4 shadow-sm ${isExceeded ? 'bg-red-50 border-red-200' : 'bg-white'}`}>
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   {getStatusIcon(goal.status)}
@@ -234,45 +222,39 @@ export default function GoalsTracker({ goals, familyId, userId, isParent }: Goal
                 {goal.status === 'active' && isParent && (
                   <button
                     onClick={() => completeGoal(goal.id)}
-                    className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
+                    className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
                   >
-                    Mark Complete
+                    Archive
                   </button>
                 )}
               </div>
 
               <p className="text-sm text-gray-600 mb-4">{goal.description}</p>
+              <p className="text-sm font-semibold text-indigo-800 mb-2">Assigned to: {memberAssigned}</p>
 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{formatTypeLabel(goal.type)}</span>
-                  <span className="font-medium">
-                    {Math.round(goal.current_value)} / {goal.target_value} {goal.unit}
+                  <span className="text-gray-500">Screen Time ({goal.period})</span>
+                  <span className={`font-medium ${isExceeded ? 'text-red-600' : ''}`}>
+                    {usage} / {goal.target_value} {goal.unit}
                   </span>
                 </div>
 
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
                     className={`h-2 rounded-full ${
-                      getProgressPercent(goal) >= 100 ? 'bg-green-500' : 'bg-indigo-600'
+                      isExceeded ? 'bg-red-500' : 'bg-indigo-600'
                     }`}
-                    style={{ width: `${getProgressPercent(goal)}%` }}
+                    style={{ width: `${getProgressPercent(goal, usage)}%` }}
                   ></div>
                 </div>
 
-                <p className="text-xs text-gray-500">
-                  {goal.period === 'daily' ? 'Today' : 'This week'} • {goal.status}
+                <p className="text-xs text-gray-500 mt-2">
+                  {goal.period === 'daily' ? 'Today' : 'This week'} • {isExceeded ? <span className="text-red-600 font-bold">Limit Exceeded</span> : <span className="text-green-600">On Track</span>}
                 </p>
-
-                {goal.reward && (
-                  <div className="flex items-center gap-1 text-sm text-amber-600 mt-2">
-                    <Trophy size={16} />
-                    <span>{goal.reward}</span>
-                  </div>
-                )}
               </div>
             </div>
-          ))}
+          )})}
         </div>
       )}
     </div>

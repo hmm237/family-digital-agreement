@@ -12,7 +12,7 @@ import RulesManager from '@/components/RulesManager'
 import GoalsTracker from '@/components/GoalsTracker'
 import ExportMenu from '@/components/ExportMenu'
 import Link from 'next/link'
-import { User, Download, BarChart3, Shield, Target, LogOut } from 'lucide-react'
+import { User, Download, BarChart3, Shield, Target, LogOut, AlertTriangle } from 'lucide-react'
 
 type Tab = 'history' | 'analytics' | 'rules' | 'goals'
 
@@ -151,8 +151,42 @@ export default function DashboardPage() {
     { id: 'history', label: 'History', icon: BarChart3 },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     ...(isParent ? [{ id: 'rules', label: 'Rules', icon: Shield } as const] : []),
-    { id: 'goals', label: 'Goals', icon: Target },
+    { id: 'goals', label: 'Screen Time', icon: Target },
   ]
+
+  // Calculate exceeded quotas for global alert
+  const getExceededQuotas = () => {
+    const exceeded: { memberName: string, title: string, usage: number, target: number }[] = []
+    
+    goals.filter(g => g.type === 'daily_screen_time' && g.status === 'active').forEach(goal => {
+      const start = new Date(goal.period_start).getTime()
+      const end = new Date(goal.period_end).getTime()
+
+      const relevantVisits = visits.filter(v => {
+        const vTime = new Date(v.visited_at).getTime()
+        if (vTime < start || vTime > end) return false
+        if (goal.user_id && v.user_id !== goal.user_id) return false
+        return true
+      })
+
+      const totalMs = relevantVisits.reduce((sum, v) => sum + v.duration_ms, 0)
+      const usageMinutes = Math.round(totalMs / 1000 / 60)
+      
+      if (usageMinutes > goal.target_value) {
+        const memberAssigned = goal.user_id ? family?.members?.find(m => m.id === goal.user_id)?.name : "All Members"
+        exceeded.push({
+          memberName: memberAssigned || "Unknown",
+          title: goal.title,
+          usage: usageMinutes,
+          target: goal.target_value
+        })
+      }
+    })
+    
+    return exceeded
+  }
+  
+  const exceededQuotas = getExceededQuotas()
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -182,6 +216,28 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {exceededQuotas.length > 0 && (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md shadow-sm">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Screen Time Allowance Exceeded!</h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <ul className="list-disc pl-5 space-y-1">
+                    {exceededQuotas.map((eq, idx) => (
+                      <li key={idx}>
+                        <strong>{eq.memberName}</strong> has exceeded the quota "{eq.title}" ({eq.usage} / {eq.target} minutes).
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-lg shadow p-4 mb-6">
           <div className="flex flex-wrap gap-4 items-center">
@@ -259,7 +315,14 @@ export default function DashboardPage() {
                 <RulesManager rules={rules} familyId={family.id} onRulesChange={setRules} />
               )}
               {activeTab === 'goals' && (
-                <GoalsTracker goals={goals} familyId={family.id} userId={user?.id} isParent={isParent} />
+                <GoalsTracker 
+                  goals={goals} 
+                  familyId={family.id} 
+                  userId={user?.id} 
+                  isParent={isParent}
+                  visits={visits}
+                  familyMembers={family.members || []}
+                />
               )}
             </>
           )}
