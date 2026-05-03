@@ -80,46 +80,6 @@ export default function FamilySetupPage() {
     router.push('/dashboard')
   }
 
-    if (!user?.id) {
-      setError('User not authenticated. Please log in again.')
-      setLoading(false)
-      return
-    }
-
-    // Create family
-    const { data: newFamily, error: createError } = await supabase
-      .from('families')
-      .insert({ name: familyName, created_by: user.id })
-      .select()
-      .single()
-
-    console.log('[FamilySetup] Insert result:', { newFamily, createError })
-
-    if (createError) {
-      console.error('[FamilySetup] Create error:', createError)
-      setError('Failed to create family: ' + (createError.message || JSON.stringify(createError)))
-      setLoading(false)
-      return
-    }
-
-    // Update user's family_id
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({ family_id: newFamily.id })
-      .eq('id', user.id)
-
-    console.log('[FamilySetup] Update user result:', { updateError })
-
-    if (updateError) {
-      console.error('[FamilySetup] Update error:', updateError)
-      setError('Family created but failed to add user: ' + (updateError.message || JSON.stringify(updateError)))
-      setLoading(false)
-      return
-    }
-
-    console.log('[FamilySetup] Success, redirecting to dashboard')
-    router.push('/dashboard')
-  }
 
   const handleJoinFamily = async (e: React.FormEvent) => {
     e.preventDefault()
