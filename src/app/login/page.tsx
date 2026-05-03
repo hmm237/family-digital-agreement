@@ -28,8 +28,10 @@ export default function LoginPage() {
       return
     }
 
-    router.push('/dashboard')
+    // Use window.location.href to force a full refresh and bypass any navigation hangs
+    window.location.href = '/dashboard'
   }
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

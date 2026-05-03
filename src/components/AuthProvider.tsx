@@ -1,6 +1,7 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
+
 import type { User, FamilyWithMembers, AuthState } from '@/types'
 import { supabase } from '@/lib/supabase'
 
@@ -39,55 +40,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: false,
   })
   const [loading, setLoading] = useState(true)
+  const fetchingRef = useRef(false)
+
+
 
   const fetchFamily = useCallback(async (userId: string): Promise<FamilyWithMembersDB | null> => {
     try {
       console.log('[fetchFamily] Fetching family for user:', userId)
 
+      // Optimize: Fetch family_id and the family details in one go if possible, 
+      // but let's stick to a robust two-step for now but with better error handling
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('family_id')
         .eq('id', userId)
-        .single()
+        .maybeSingle()
 
       if (userError) {
-        console.error('[fetchFamily] Error fetching user family:', userError)
+        console.error('[fetchFamily] User lookup error:', userError)
         return null
       }
 
-      if (!userData || !userData.family_id) {
-        console.log('[fetchFamily] User has no family_id')
+      if (!userData?.family_id) {
+        console.log('[fetchFamily] No family_id found for user')
         return null
       }
-
-      console.log('[fetchFamily] Found family_id:', userData.family_id)
 
       const { data: family, error: familyError } = await supabase
         .from('families')
         .select(`
           *,
-          members:users(id, email, name, role, family_id, created_at, updated_at)
+          members:users(*)
         `)
         .eq('id', userData.family_id)
-        .single()
+        .maybeSingle()
 
       if (familyError) {
-        console.error('[fetchFamily] Error fetching family:', familyError)
+        console.error('[fetchFamily] Family lookup error:', familyError)
         return null
       }
 
-      if (!family) {
-        console.log('[fetchFamily] Family not found')
-        return null
-      }
-
-      console.log('[fetchFamily] Family found:', family.name, 'with', family.members?.length || 0, 'members')
       return family as FamilyWithMembersDB
     } catch (err) {
-      console.error('[fetchFamily] Unexpected error:', err)
+      console.error('[fetchFamily] Exception:', err)
       return null
     }
   }, [])
+
 
   useEffect(() => {
     const initAuth = async () => {
@@ -105,14 +104,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('[AuthProvider] getUser error:', error)
         }
 
-        if (user) {
+        if (user && !fetchingRef.current) {
+          fetchingRef.current = true
           const family = await fetchFamily(user.id)
           setAuthState({
             user: user as unknown as User,
             family: family as FamilyWithMembers | null,
             isAuthenticated: true,
           })
-        } else {
+          fetchingRef.current = false
+        } else if (!user) {
           setAuthState({
             user: null,
             family: null,
@@ -121,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (err) {
         console.error('[AuthProvider] Init error:', err)
+        fetchingRef.current = false
       } finally {
         clearTimeout(timer)
         setLoading(false)
@@ -132,14 +134,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('[AuthProvider] Auth state change:', event)
+        if (fetchingRef.current) return
+
         try {
           if (session?.user) {
+            fetchingRef.current = true
             const family = await fetchFamily(session.user.id)
             setAuthState({
               user: session.user as unknown as User,
               family: family as FamilyWithMembers | null,
               isAuthenticated: true,
             })
+            fetchingRef.current = false
           } else {
             setAuthState({
               user: null,
@@ -152,6 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     )
+
 
     return () => subscription.unsubscribe()
 
