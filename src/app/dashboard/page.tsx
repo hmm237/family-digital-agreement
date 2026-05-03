@@ -121,10 +121,10 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
-    if (isAuthenticated && !family && !loading) {
+    if (isAuthenticated && !family) {
       router.push('/family/setup')
     }
-  }, [isAuthenticated, family, loading, router])
+  }, [isAuthenticated, family, router])
 
   if (!family) {
     return (
