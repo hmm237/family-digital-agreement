@@ -180,12 +180,12 @@ returns trigger language plpgsql security definer as $$
 begin
   insert into public.users (id, email, name, role)
   values (
-    new.id,
-    new.email,
-    coalesce(new.raw_user_meta_data->>'name', 'Unknown'),
-    coalesce(new.raw_user_meta_data->>'role', 'child')
+    NEW.id,
+    NEW.email,
+    coalesce(NEW.raw_user_meta_data->>'name', 'Unknown'),
+    coalesce(NEW.raw_user_meta_data->>'role', 'child')
   );
-  return new;
+  return NEW;
 end;
 $$;
 
