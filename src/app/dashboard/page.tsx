@@ -12,7 +12,7 @@ import RulesManager from '@/components/RulesManager'
 import GoalsTracker from '@/components/GoalsTracker'
 import ExportMenu from '@/components/ExportMenu'
 import Link from 'next/link'
-import { User, Download, BarChart3, Shield, Target } from 'lucide-react'
+import { User, Download, BarChart3, Shield, Target, LogOut } from 'lucide-react'
 
 type Tab = 'history' | 'analytics' | 'rules' | 'goals'
 
@@ -28,6 +28,11 @@ export default function DashboardPage() {
   const [selectedUser, setSelectedUser] = useState<string>('all')
 
   const isParent = user?.role === 'parent'
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.replace('/login')
+  }
 
   const fetchData = useCallback(async () => {
     if (!family) return
@@ -144,20 +149,29 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8 flex justify-between items-center">
+        <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Family Digital Agreement</h1>
             <p className="text-gray-600 mt-1">
-              Welcome, {user?.name}! Family: {family?.name}
+              Welcome, {family?.members?.find(m => m.id === user?.id)?.name || (user as any)?.user_metadata?.full_name || (user as any)?.user_metadata?.name || user?.email}! Family: {family?.name}
             </p>
           </div>
-          <Link
-            href="/settings"
-            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            <User size={16} />
-            Extension Setup
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/settings"
+              className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <User size={16} />
+              Extension Setup
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center gap-2 px-4 py-2 border border-red-300 rounded-md text-sm font-medium text-red-700 hover:bg-red-50"
+            >
+              <LogOut size={16} />
+              Logout
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow p-4 mb-6">

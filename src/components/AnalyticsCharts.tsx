@@ -155,10 +155,10 @@ export default function AnalyticsCharts({ visits, dateRange }: AnalyticsChartsPr
         <h3 className="text-lg font-semibold mb-4">Top Domains Visited</h3>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={topDomains} layout="vertical">
+            <BarChart data={topDomains} layout="vertical" margin={{ left: 80, right: 20 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis type="number" />
-              <YAxis type="category" dataKey="domain" tick={{ fontSize: 12 }} width={120} />
+              <YAxis type="category" dataKey="domain" tick={{ fontSize: 12 }} width={200} />
               <Tooltip />
               <Bar dataKey="count" fill="#8b5cf6" />
             </BarChart>
