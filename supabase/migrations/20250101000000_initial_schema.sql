@@ -109,11 +109,15 @@ create policy "family_members_can_read_users" on users
 create policy "users_can_update_self" on users
   for update using (auth.uid() = id);
 
--- Parents can insert children into their family
+-- Parents can insert children into their family (CORRECTED)
 create policy "parents_can_insert_children" on users
   for insert with check (
-  auth.uid() in (
-    select id from users where family_id = new.family_id and role = 'parent'
+  exists (
+    select 1
+    from users p
+    where p.id = auth.uid()
+      and p.family_id = users.family_id
+      and p.role = 'parent'
   )
 );
 
@@ -135,9 +139,6 @@ create policy "family_members_can_read_visits" on visits
   for select using (
   family_id in (select family_id from users where id = auth.uid())
 );
-
--- Extension can insert visits (via service role or API)
--- We'll use a secure API route with service role key for inserts
 
 -- Rules: Family members can read rules from their family
 create policy "family_members_can_read_rules" on rules
@@ -174,7 +175,7 @@ create policy "children_can_update_own_goals" on goals
   auth.uid() in (select id from users where family_id = goals.family_id)
 );
 
--- Functions for handling new user signup
+-- Functions for handling new user signup (CORRECTED with uppercase NEW)
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer as $$
 begin
