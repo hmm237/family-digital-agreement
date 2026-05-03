@@ -14,6 +14,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  LabelList,
 } from 'recharts'
 
 interface AnalyticsChartsProps {
@@ -118,8 +119,7 @@ export default function AnalyticsCharts({ visits, dateRange }: AnalyticsChartsPr
                 data={categoryData}
                 cx="50%"
                 cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
+                label={({ name, value, percent }) => `${name}: ${value} (${((percent || 0) * 100).toFixed(0)}%)`}
                 outerRadius={120}
                 fill="#8884d8"
                 dataKey="value"
@@ -144,7 +144,9 @@ export default function AnalyticsCharts({ visits, dateRange }: AnalyticsChartsPr
               <XAxis dataKey="date" tick={{ fontSize: 12 }} />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="minutes" fill="#6366f1" />
+              <Bar dataKey="minutes" fill="#6366f1">
+                <LabelList dataKey="minutes" position="top" />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -160,7 +162,9 @@ export default function AnalyticsCharts({ visits, dateRange }: AnalyticsChartsPr
               <XAxis type="number" />
               <YAxis type="category" dataKey="domain" tick={{ fontSize: 12 }} width={200} />
               <Tooltip />
-              <Bar dataKey="count" fill="#8b5cf6" />
+              <Bar dataKey="count" fill="#8b5cf6">
+                <LabelList dataKey="count" position="right" />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -176,7 +180,9 @@ export default function AnalyticsCharts({ visits, dateRange }: AnalyticsChartsPr
               <XAxis dataKey="hour" tick={{ fontSize: 12 }} />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="count" fill="#ec4899" />
+              <Bar dataKey="count" fill="#ec4899">
+                <LabelList dataKey="count" position="top" />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
