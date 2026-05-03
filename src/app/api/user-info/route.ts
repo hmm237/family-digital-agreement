@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+export const dynamic = 'force-dynamic'
+
 import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-})
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,6 +15,18 @@ export async function OPTIONS() {
 
 export async function GET(request: NextRequest) {
   try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('[API] Missing Supabase environment variables')
+      return NextResponse.json({ error: 'Configuration error' }, { status: 500, headers: corsHeaders })
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
+
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
 

@@ -120,7 +120,7 @@ export default function AnalyticsCharts({ visits, dateRange }: AnalyticsChartsPr
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, name, value }) => {
+                label={({ cx, cy, midAngle = 0, innerRadius, outerRadius, percent = 0, name, value }) => {
                   const RADIAN = Math.PI / 180;
                   const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
                   const x = cx + radius * Math.cos(-midAngle * RADIAN);
