@@ -17,9 +17,9 @@ export default function FamilySetupPage() {
 
   useEffect(() => {
     if (family) {
-      router.push('/dashboard')
+      router.replace('/dashboard')
     } else if (!isAuthenticated) {
-      router.push('/login')
+      router.replace('/login')
     }
   }, [family, isAuthenticated, router])
 

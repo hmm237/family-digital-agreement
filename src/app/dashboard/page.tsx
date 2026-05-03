@@ -122,7 +122,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (isAuthenticated && !family) {
-      router.push('/family/setup')
+      router.replace('/family/setup')
     }
   }, [isAuthenticated, family, router])
 

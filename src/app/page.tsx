@@ -8,13 +8,17 @@ import { BarChart3, Shield, Target, Users, CheckCircle } from 'lucide-react'
 
 export default function Home() {
   const router = useRouter()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, family } = useAuth()
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard')
+      if (!family) {
+        router.replace('/family/setup')
+      } else {
+        router.replace('/dashboard')
+      }
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, family, router])
 
   if (isAuthenticated) {
     return (
