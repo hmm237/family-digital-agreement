@@ -38,3 +38,30 @@ create trigger on_family_created
 
 -- Update existing families with invite codes
 update families set invite_code = generate_invite_code() where invite_code is null;
+
+-- RLS Policies for new features
+-- Allow parents to add new members to their family
+create policy "Parents can add members"
+  on users for insert
+  with check (
+    exists (
+      select 1 from users p
+      where p.id = auth.uid()
+      and p.family_id = NEW.family_id
+      and p.role = 'parent'
+    )
+  );
+
+-- Allow anyone to lookup family via invite code (for joining)
+create policy "Anyone can lookup family via invite code"
+  on families for select
+  using (true);
+
+-- Allow users to see their family members
+create policy "Users can see their family members"
+  on users for select
+  using (
+    family_id in (
+      select family_id from users where id = auth.uid()
+    )
+  );
