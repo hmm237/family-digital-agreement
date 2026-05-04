@@ -51,6 +51,11 @@ export default function LoginPage() {
             </div>
           )}
           <div className="rounded-md shadow-sm -space-y-px">
+            <div className="bg-blue-50 p-4 rounded-md border border-blue-100 mb-4">
+              <p className="text-xs text-blue-800">
+                <strong>Child login?</strong> Use the browser extension with your parent's <strong>Invite Code</strong> to start tracking!
+              </p>
+            </div>
             <div>
               <label htmlFor="email" className="sr-only">
                 Email address
