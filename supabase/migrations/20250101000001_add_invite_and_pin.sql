@@ -47,7 +47,7 @@ create policy "Parents can add members"
     exists (
       select 1 from users p
       where p.id = auth.uid()
-      and p.family_id = NEW.family_id
+      and p.family_id = family_id
       and p.role = 'parent'
     )
   );
