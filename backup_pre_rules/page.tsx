@@ -334,7 +334,7 @@ export default function DashboardPage() {
                 </div>
               )}
               {activeTab === 'rules' && isParent && (
-                <RulesManager rules={rules} familyId={family.id} onRulesChange={setRules} userId={user.id} />
+                <RulesManager rules={rules} familyId={family.id} onRulesChange={setRules} />
               )}
               {activeTab === 'goals' && (
                 <GoalsTracker 

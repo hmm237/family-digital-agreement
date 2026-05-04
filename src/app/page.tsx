@@ -142,14 +142,6 @@ export default function Home() {
           </div>
         </div>
       </main>
-
-      <footer className="container mx-auto px-4 py-8 text-center text-gray-500 text-sm">
-        <p>Built with ❤️ for families who value transparency.</p>
-        <p className="mt-2">
-          <Link href="/login" className="hover:underline">Sign In</Link> ·{' '}
-          <Link href="/signup" className="hover:underline">Create Account</Link>
-        </p>
-      </footer>
     </div>
   )
 }

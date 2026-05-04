@@ -36,6 +36,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('headerTitle').textContent = 'Family Digital Agreement'
   }
 
+  // Auto-sync rules when opening extension
+  if (hasConfig && result.enabled) {
+    chrome.runtime.sendMessage({ action: 'syncRules' })
+  }
+
   updateStatus(hasConfig ? 'Extension configured and ready' : 'Please configure your family details', 'info')
 })
 
@@ -78,6 +83,24 @@ async function toggleTracking() {
   })
 
   updateStatus(enabled ? 'Tracking enabled' : 'Tracking paused', 'success')
+}
+
+async function syncRules() {
+  const btn = document.getElementById('syncRulesBtn')
+  const originalText = btn.textContent
+  btn.textContent = '⏳ Syncing...'
+  btn.disabled = true
+
+  const result = await chrome.runtime.sendMessage({ action: 'syncRules' })
+  
+  if (result.success) {
+    updateStatus('Rules synced successfully!', 'success')
+  } else {
+    updateStatus('Failed to sync rules', 'error')
+  }
+  
+  btn.textContent = originalText
+  btn.disabled = false
 }
 
 function showStatus(message, type) {
@@ -147,3 +170,4 @@ function updateStatus(message, type) {
 document.getElementById('saveBtn').addEventListener('click', saveConfig)
 document.getElementById('enabledToggle').addEventListener('change', toggleTracking)
 document.getElementById('logoutBtn').addEventListener('click', logout)
+document.getElementById('syncRulesBtn').addEventListener('click', syncRules)

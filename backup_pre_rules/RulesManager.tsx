@@ -9,10 +9,9 @@ interface RulesManagerProps {
   rules: Rule[]
   familyId: string
   onRulesChange: (rules: Rule[]) => void
-  userId: string
 }
 
-export default function RulesManager({ rules, familyId, onRulesChange, userId }: RulesManagerProps) {
+export default function RulesManager({ rules, familyId, onRulesChange }: RulesManagerProps) {
   const [showForm, setShowForm] = useState(false)
   const [editingRule, setEditingRule] = useState<Rule | null>(null)
   const [name, setName] = useState('')
@@ -40,7 +39,6 @@ export default function RulesManager({ rules, familyId, onRulesChange, userId }:
       schedule_end: scheduleEnd || null,
       schedule_days: scheduleDays.length > 0 ? scheduleDays : null,
       is_active: true,
-      created_by: userId,
     }
 
     let result
