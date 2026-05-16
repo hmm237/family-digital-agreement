@@ -1,9 +1,10 @@
 'use client'
 
 import { useAuth } from '@/components/AuthProvider'
-import { Copy, Check, User, Users, Link as LinkIcon, ShieldAlert } from 'lucide-react'
+import { Copy, Check, User, Users, Link as LinkIcon, ShieldAlert, ArrowLeft } from 'lucide-react'
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import Link from 'next/link'
 
 export default function SettingsPage() {
   const { user, family } = useAuth()
@@ -88,6 +89,12 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="mb-4">
+          <Link href="/" className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            <ArrowLeft size={16} />
+            Back to Dashboard
+          </Link>
+        </div>
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b">
             <h1 className="text-2xl font-bold text-gray-900">Extension Setup</h1>
