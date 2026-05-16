@@ -84,6 +84,7 @@ export default function SettingsPage() {
   const fields = [
     { label: 'Family Invite Code', value: (family as any).invite_code || '---', icon: <Users size={16} />, key: 'inviteCode' },
     { label: 'App URL', value: typeof window !== 'undefined' ? window.location.origin : '', icon: <LinkIcon size={16} />, key: 'appUrl' },
+    { label: 'Family ID (For old extension)', value: family.id, icon: <Users size={16} />, key: 'familyId' },
   ]
 
   return (
@@ -231,12 +232,27 @@ export default function SettingsPage() {
                 </form>
 
                 <div className="mt-6 border-t pt-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">Current Members:</h3>
-                  <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Current Members (with User IDs):</h3>
+                  <div className="space-y-3">
                     {(family as any).members?.map((m: any) => (
-                      <div key={m.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md text-sm">
-                        <span className="font-medium">{m.name}</span>
-                        <span className="text-gray-500 italic">{m.role}</span>
+                      <div key={m.id} className="flex flex-col p-3 bg-gray-50 rounded-md text-sm border border-gray-200 shadow-sm">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium text-gray-900">{m.name}</span>
+                          <span className="text-xs px-2 py-1 bg-gray-200 text-gray-700 rounded-full capitalize">{m.role}</span>
+                        </div>
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                          <span className="text-xs font-mono text-gray-500 truncate mr-2">{m.id}</span>
+                          <button
+                            onClick={() => copyToClipboard(m.id, `user-${m.id}`)}
+                            className="px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1 text-xs shrink-0"
+                          >
+                            {copied === `user-${m.id}` ? (
+                              <><Check size={12} className="text-green-600" /><span className="text-green-600">Copied</span></>
+                            ) : (
+                              <><Copy size={12} />Copy User ID</>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
